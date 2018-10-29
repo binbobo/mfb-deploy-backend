@@ -1,0 +1,20 @@
+{
+  "name": "mfb-deploy",
+  "version": "1.0.0",
+  "description": "front end deploment system",
+  "main": "app.js",
+  "scripts": {
+    "dev": "nodemon app.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "wangbin@missfresh.cn",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.18.3",
+    "express": "^4.16.4",
+    "mongoose": "^5.3.6"
+  },
+  "devDependencies": {
+    "nodemon": "^1.18.4"
+  }
+}
