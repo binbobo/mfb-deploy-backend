@@ -1,12 +1,10 @@
 const router = require('express').Router()
   , MController = require('../controllers/user')
   
-router.post('/register', function(req, res) {
- MController.register(req, res)
-})
+router.post('/register', MController.register)
 
-router.get('/list', function(req, res) {
-  MController.list(req, res)
- })
+router.get('/list', MController.list)
+
+router.get('/getUserByName', MController.getUserByName)
 
 module.exports = router

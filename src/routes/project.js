@@ -1,14 +1,11 @@
 const router = require('express').Router()
   , MController = require('../controllers/project')
 
-router.post('/add', function(req, res) {
- MController.add(req, res)
-})
-router.get('/list', function(req, res) {
-  MController.list(req, res)
- })
- router.get('/info', function(req, res) {
-  MController.info(req, res)
- })
+router.post('/add', MController.add)
+router.get('/list', MController.list)
+router.post('/info', MController.info)
+router.post('/memberInfo', MController.memberInfo)
+router.post('/inviteMember', MController.inviteMember)
+router.post('/removeMember', MController.removeMember)
 
 module.exports = router

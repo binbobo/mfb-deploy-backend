@@ -1,10 +1,12 @@
 
 const mongoose = require('mongoose');
-const DBSchema = require('../models/project');
+const ProjectSchema = require('../models/project');
+const UserSchema = require('../models/user');
 const {requestHandler} = require('../utils/db')
 const config = require('../config/statusCode')
 // Doc Ref
-var DBModel = mongoose.model('Project', DBSchema);
+const ProjectModel = mongoose.model('Project', ProjectSchema);
+const UserModel = mongoose.model('User', UserSchema);
 
 const add = function(req, res) {
   // 校验字段
@@ -29,7 +31,7 @@ const add = function(req, res) {
   // 初始成员为创建用户
   req.body.member = [req.body.creator]
 
-  new DBModel(req.body).save(function (err, result) {
+  new ProjectModel(req.body).save(function (err, result) {
     if (err) {
       return requestHandler(res, config.DB_ERR, '数据库错误，保存失败')
     }
@@ -39,7 +41,7 @@ const add = function(req, res) {
 
 // 获取所有服务器列表
 const list = function (req, res) {
-  DBModel.find({}, function (err, data) {
+  ProjectModel.find({}, function (err, data) {
     if (err) return requestHandler(res, config.DB_ERR, '数据库错误，查询列表失败')
     return requestHandler(res, config.SUCCESS, '查询列表成功', {
       total: data.length,
@@ -49,19 +51,69 @@ const list = function (req, res) {
 };
 
 const info = function (req, res) {
-  const {projectId} = req.query
-  if (!projectId) return requestHandler(res, config.PARAMS_ERR, '请求参数错误')
+  let {id, fields} = req.body
+  if (!fields || !Array.isArray(fields)) fields = []
+  if (!id) return requestHandler(res, config.PARAMS_ERR, '请求参数错误')
 
-  DBModel.findOne({_id:projectId}, function (err, data) {
+  ProjectModel.findOne({_id:id}, fields.join(' '),function (err, data) {
     if (err) return requestHandler(res, config.DB_ERR, '数据库错误，查询失败')
-    return requestHandler(res, config.SUCCESS, '查询成功', {
-      total: data.length,
-      result: data
-    })
+    return requestHandler(res, config.SUCCESS, '查询成功', data)
   });
 };
 
+const memberInfo = function (req, res) {
+  let {id} = req.body
+  if (!id) return requestHandler(res, config.PARAMS_ERR, '请求参数错误')
+
+  ProjectModel.findOne({_id:id}, 'member creator',function (err, data) {
+    if (err) return requestHandler(res, config.DB_ERR, '数据库错误，查询项目信息失败')
+    const {creator, member} = data
+    UserModel.find({username:{$in: member}}, 'username email',function (err, data) {
+      if (err) return requestHandler(res, config.DB_ERR, '数据库错误，查询用户信息失败')
+      return requestHandler(res, config.SUCCESS, '查询成功', {
+        creator,
+        memberList: data
+      })
+    })
+  })
+}
+
+const inviteMember = function (req, res) {
+  let {id, member} = req.body
+  if (!id || !member) return requestHandler(res, config.PARAMS_ERR, '请求参数错误')
+
+  // 检查邀请的成员是不是系统用户
+  UserModel.findOne({username:member},function (err, data) {
+    if (err) return requestHandler(res, config.DB_ERR, '数据库错误，查询失败')
+    if (!data) return requestHandler(res, config.BUSS_LOGIN_ERR, '被邀请成员不存在')
+    // 判断被邀请成员是否已在项目中
+    ProjectModel.findOne({_id:id}, 'member', function (err, data) {
+      if (err) return requestHandler(res, config.DB_ERR, '数据库错误，查询失败')
+      if (data.member.indexOf(member)>-1) return requestHandler(res, config.BUSS_LOGIN_ERR, '该成员已在项目中')
+      // 更新项目记录 添加新成员
+      ProjectModel.findByIdAndUpdate(id, { "$push": { member } },function (err, data) {
+        if (err) return requestHandler(res, config.DB_ERR, '数据库错误，更新失败')
+        return requestHandler(res, config.SUCCESS, '更新成功')
+      })
+    })
+  })
+}
+
+const removeMember = function (req, res) {
+  let {id, member} = req.body
+  if (!id || !member) return requestHandler(res, config.PARAMS_ERR, '请求参数错误')
+
+  // 更新项目记录 添加新成员
+  ProjectModel.findByIdAndUpdate(id, { "$pull": { member } },function (err, data) {
+    if (err) return requestHandler(res, config.DB_ERR, '数据库错误，更新失败')
+    return requestHandler(res, config.SUCCESS, '更新成功')
+  })
+}
+
 module.exports = {
+  removeMember,
+  inviteMember,
+  memberInfo,
   add,
   list,
   info

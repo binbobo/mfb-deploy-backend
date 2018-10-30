@@ -52,18 +52,27 @@ const register = function (req, res) {
 const list = function (req, res) {
   DBModel.find({}, 'username', function (err, data) {
     if (err) return requestHandler(res, config.DB_ERR, '数据库错误，查询列表失败')
-    return requestHandler(res, config.SUCCESS, '查询列表成功', {
-      total: data.length,
-      result: data
-    })
+    return requestHandler(res, config.SUCCESS, '查询列表成功', data)
   });
 };
+
+// 获取所有服务器列表
+const getUserByName = function (req, res) {
+  let {name} = req.query
+  if (typeof name !== 'string' || !name.trim()) return requestHandler(res, config.PARAMS_ERR, '请求参数错误')
+  DBModel.find({'username': { $regex: '.*' + name + '.*' }}, 'username', function (err, data) {
+    if (err) return requestHandler(res, config.DB_ERR, '数据库错误，查询失败')
+    return requestHandler(res, config.SUCCESS, '查询成功', data)
+  });
+};
+
 
 // const logout = function (req, res) {
 //   DBCommonHander.successHandler( res, '退出系统成功', null)
 // }
 
 module.exports = {
+  getUserByName,
   list,
   register
 }
