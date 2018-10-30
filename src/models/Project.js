@@ -8,7 +8,8 @@ var DBSchema = mongoose.Schema({
   member: [String],
   env: [{
     server: String,
-    name: String
+    name: String,
+    deployPath: String
   }],
   repo: {
     // type 是关键字  不能用作字段名称

@@ -110,7 +110,20 @@ const removeMember = function (req, res) {
   })
 }
 
+const addEnv = function(req, res) {
+  // 校验字段
+  const {id, env} = req.body
+  if (!id || typeof env !== 'object') return requestHandler(res, config.PARAMS_ERR, '请求参数错误')
+ 
+  // 更新项目记录 添加新环境
+  ProjectModel.findByIdAndUpdate(id, { "$push": { env } },function (err, data) {
+    if (err) return requestHandler(res, config.DB_ERR, '数据库错误，更新失败')
+    return requestHandler(res, config.SUCCESS, '更新成功')
+  })
+}
+
 module.exports = {
+  addEnv,
   removeMember,
   inviteMember,
   memberInfo,
